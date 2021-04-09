@@ -46,18 +46,96 @@ names(activity)
 head(activity)
 str(activity)
 ```
+   
 
+### Histogram of the total number of steps taken each day
+
+The following histogram is a standard histogram - it can be modified by many ways but there are no instructions to do that.
+
+```{r}
+spd <- tapply(activity$steps, activity$date, sum)
+hist(spd, main = "Histogram of the total number of steps taken each day", xlab = "Steps")
+```
 
 ## What is mean total number of steps taken per day?
 
+Mean and median number of steps taken each day:
+```{r}
+mean <- mean(spd, na.rm = TRUE)
+median <- median(spd, na.rm = TRUE)
+```
 
+The mean of steps taken each day is: `r mean`  
+The median of steps taken each day is: `r median`  
 
 ## What is the average daily activity pattern?
 
+### Time series plot of the average number of steps taken
 
+```{r}
+step <- tapply(activity$steps, activity$interval, mean, na.rm = TRUE)
+plot(as.numeric(names(step)), step, xlab = "Interval", ylab = "Steps", 
+     main = "Average Daily Activity Pattern", type = "l")
+```
+
+### The 5-minute interval that, on average, contains the maximum number of steps  
+
+```{r}
+maxInterval <- names(sort(step, decreasing = TRUE)[1])
+maxSteps <- sort(step, decreasing = TRUE)[1]
+```
+The interval `r maxInterval` contains with `r maxSteps` the maximum number of steps.`
 
 ## Imputing missing values
 
+### Calculate and report the total number of missing values in the dataset.
+
+```{r}
+na <- sum(is.na(activity$steps))
+```
+
+There are `r na` missing values.  
+
+### Devise a strategy for filling in all of the missing values in the dataset.  
+The strategy does not need to be sophisticated. For example, you could use the mean/median for that daym or the mean for that 5-minute interval, etc.
+
+The missing data is replaced with the average number of steps resulting from the available data of all days for that particular interval.
+
+### Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r}
+stepInterval <- tapply(activity$steps, activity$interval, mean, na.rm = TRUE)
+actSplit <- split(activity, activity$interval)
+for(i in 1:length(actSplit)) {
+    actSplit[[i]]$steps[is.na(actSplit[[i]]$steps)] <- stepInterval[i]
+}
+actFilled <- do.call("rbind", actSplit)
+actFilled <- actFilled[order(actFilled$date) ,]
+
+```
+
+### Make a histogram of the total number of steps taken each day 
+
+```{r}
+stepFilled <- tapply(actFilled$steps, actFilled$date, sum)
+hist(stepFilled, main = "Histogram Steps per Day with filled data", xlab = "Steps")
+```
+
+### Calculate and report the mean and median total number of steps taken per day
+
+Mean and median number of steps taken each day:
+```{r}
+meanFilled <- mean(stepFilled, na.rm = TRUE)
+medianFilled <- median(stepFilled, na.rm = TRUE)
+```
+
+The mean of steps taken each day is: `r meanFilled`  
+The median of steps taken each day is: `r medianFilled`  
+
+Do these values differ from the estimates from the first part of the assignment?
+
+Mean with NA:   `r mean`         Median with NA:    `r median`   
+Mean without NA: `r meanFilled`  Median without NA: `r medianFilled`  
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
